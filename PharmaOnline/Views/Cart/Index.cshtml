@@ -10,7 +10,9 @@
     <div class="container py-4">
         <div class="d-flex justify-content-between mb-4">
             <h3 class="fw-bold">Shopping Cart</h3>
-            <a href="home.html" class="btn btn-outline-primary">&larr; Back to Catalog</a>
+            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">
+                &larr; Back to Catalog
+            </a>
         </div>
         <div class="row g-4">
             <div class="col-lg-8">
@@ -29,14 +31,6 @@
                     </table>
                 </div>
             </div>
-            <div class="col-lg-4">
-                <div class="card p-4 border-0 shadow-sm">
-                    <h5 class="fw-bold mb-3">Order Summary</h5>
-                    <div class="d-flex justify-content-between mb-2"><span>Total</span><span class="fw-bold text-primary fs-5">Rs. 500</span></div>
-                    <button class="btn btn-success btn-lg w-100 fw-bold mt-3" onclick="/* Place order button does nothing */">Place Order</button>
-                </div>
-            </div>
         </div>
     </div>
 </body>
-</html>
