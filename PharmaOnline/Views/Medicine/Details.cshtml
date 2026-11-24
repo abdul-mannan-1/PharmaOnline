@@ -1,0 +1,98 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Medicine Details";
+}
+
+@section Styles {
+    <style>
+        .price-tag {
+            color: #f57224;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .daraz-btn-add {
+            background-color: #FFD7B5;
+            color: #f57224;
+            font-weight: 600;
+            border: 1px solid #ffbe9d;
+        }
+
+        .daraz-btn-buy {
+            background-color: #49CFF0;
+            color: #000000;
+            font-weight: 600;
+            border: none;
+        }
+    </style>
+}
+
+<div class="container py-4">
+    <a href="javascript:history.back()" class="btn btn-outline-secondary btn-sm mb-3">&larr; Back to Search</a>
+
+    <div class="card p-4 border-0 shadow-sm" id="detailCard" style="display:none">
+        <div class="row g-4">
+            <div class="col-md-5 text-center bg-light p-4 rounded">
+                <img id="medImage" src="" class="img-fluid rounded">
+            </div>
+            <div class="col-md-7">
+                <h2 id="medTitle" class="fw-bold"></h2>
+                <p id="medFormula" class="text-muted"></p>
+                <div class="mb-3">
+                    <span class="price-tag">Rs. <span id="medPrice"></span></span>
+                </div>
+
+                <div class="card bg-light border-0 p-3 mb-3">
+                    <div class="row text-center">
+                        <div class="col-6 border-end">
+                            <small class="text-muted d-block">Stock Count</small>
+                            <strong id="medStock" class="text-success"></strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Expiry Date</small>
+                            <strong id="medExpiry" class="text-danger"></strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-3 mt-4">
+                    <button id="btnAddToCart" class="btn daraz-btn-add btn-lg px-4 flex-fill">🛒 Add to Cart</button>
+                    <a asp-controller="Cart" asp-action="Index" class="btn daraz-btn-buy btn-lg px-4 flex-fill text-center">Buy Now</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="loadingMsg" class="text-center text-muted py-5">Loading...</div>
+</div>
+
+@section Scripts {
+    <script>
+        var medicineId = @ViewBag.MedicineId;
+
+        $.get('/Medicine/GetDetails', { id: medicineId }, function (m) {
+            $('#medTitle').text(m.name);
+            $('#medFormula').text('Formula: ' + m.genericName);
+            $('#medPrice').text(m.price);
+            $('#medStock').text('In Stock (' + m.stock + ')');
+            $('#medExpiry').text(m.expiryDate ? m.expiryDate.substring(0, 10) : '-');
+
+            var imgSrc = m.imageUrl || 'https://via.placeholder.com/350x280?text=' + encodeURIComponent(m.name);
+            $('#medImage').attr('src', imgSrc).on('error', function () {
+                $(this).attr('src', 'https://via.placeholder.com/350x280?text=Medicine');
+            });
+
+            $('#loadingMsg').hide();
+            $('#detailCard').show();
+        });
+
+        $('#btnAddToCart').click(function () {
+            $.post('/Cart/AddToCart', { medicineId: medicineId, quantity: 1 }, function (res) {
+                if (res.success) {
+                    $('#cartBadge').text(res.cartCount);
+                    alert('Added to cart!');
+                }
+            });
+        });
+    </script>
+}

@@ -1,88 +1,86 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PharmaOnline - Search Medicines</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Search Medicines";
+}
+
+@section Styles {
     <style>
-            body {
-                background-color: #f8f9fa;
-                font-family: 'Segoe UI', sans-serif;
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        .medicine-card {
+            transition: transform 0.2s ease;
+            cursor: pointer;
+            border: 1px solid #edf2f7;
+            border-radius: 8px;
+        }
+
+            .medicine-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 20px rgba(0,0,0,0.08);
             }
 
-            .medicine-card {
-                transition: transform 0.2s ease;
-                cursor: pointer;
-                border: 1px solid #edf2f7;
-                border-radius: 8px;
-            }
-
-                .medicine-card:hover {
-                    transform: translateY(-3px);
-                    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-                }
-
-            .med-img {
-                height: 160px;
-                object-fit: contain;
-                background: #f8fafc;
-                padding: 15px;
-            }
+        .med-img {
+            height: 160px;
+            object-fit: contain;
+            background: #f8fafc;
+            padding: 15px;
+        }
     </style>
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg bg-white border-bottom sticky-top shadow-sm">
-        <div class="container">
-            <a asp-controller="Home" asp-action="Index">PharmaOnline</a>
-            <div>
-                <a asp-controller="Cart" asp-action="Index">View Cart</a>
-            </div>
-        </div>
-    </nav>
+}
 
-    <div class="container py-4">
-        <div class="card p-4 bg-white border-0 shadow-sm mb-4">
-            <h4 class="fw-bold mb-2">Search Medicines</h4>
-            <input type="text" id="searchInput" class="form-control form-control-lg" placeholder="Search " onkeyup="filterMedicines()">
-        </div>
-
-        <h5 class="fw-bold mb-3 text-secondary">Available Products</h5>
-        <div class="row g-4" id="medicineGrid"></div>
+<div class="container py-4">
+    <div class="card p-4 bg-white border-0 shadow-sm mb-4">
+        <h4 class="fw-bold mb-2">Search Medicines</h4>
+        <input type="text" id="searchInput" class="form-control form-control-lg"
+               placeholder="Search by name or generic..." />
     </div>
 
+    <h5 class="fw-bold mb-3 text-secondary">Available Products</h5>
+    <div class="row g-4" id="medicineGrid"></div>
+</div>
+
+@section Scripts {
     <script>
-            const medicines = [
-                { id: 1, name: "Panadol Extra 500mg", generic: "Paracetamol / Caffeine", price: 250, stock: 120, img: "https://via.placeholder.com/300x200?text=Panadol+Extra" },
-                { id: 2, name: "Augmentin 625mg", generic: "Amoxicillin / Clavulanate", price: 480, stock: 45, img: "https://via.placeholder.com/300x200?text=Augmentin" },
-                { id: 3, name: "Arinac Forte", generic: "Ibuprofen / Pseudoephedrine", price: 180, stock: 80, img: "https://via.placeholder.com/300x200?text=Arinac+Forte" },
-                { id: 4, name: "Rigix 10mg", generic: "Cetirizine HCI", price: 140, stock: 200, img: "https://via.placeholder.com/300x200?text=Rigix" }
-            ];
+        function loadMedicines(query) {
+            $.get('/Home/GetMedicines', { q: query }, function (data) {
+                var grid = $('#medicineGrid');
+                grid.empty();
 
-            function filterMedicines() {
-                const query = document.getElementById('searchInput').value.toLowerCase();
-                const grid = document.getElementById('medicineGrid');
-                grid.innerHTML = '';
-                const filtered = medicines.filter(m => m.name.toLowerCase().includes(query) || m.generic.toLowerCase().includes(query));
+                if (data.length === 0) {
+                    grid.html('<p class="text-muted">No medicines found.</p>');
+                    return;
+                }
 
-                filtered.forEach(item => {
-                    grid.innerHTML += `
-                                        <div class="col-md-3">
-                                            <div class="card h-100 medicine-card" onclick="location.href='product-details.html?id=${item.id}'">
-                                                <img src="${item.img}" class="card-img-top med-img">
-                                                <div class="card-body d-flex flex-column">
-                                                    <h6 class="fw-bold mb-1">${item.name}</h6>
-                                                    <p class="small text-muted mb-2">${item.generic}</p>
-                                                    <div class="mt-auto d-flex justify-content-between align-items-center">
-                                                        <span class="fw-bold text-primary">Rs. ${item.price}</span>
-                                                        <small class="text-muted">Stock: ${item.stock}</small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>`;
+                $.each(data, function (i, item) {
+                    var imgSrc = item.imageUrl || 'https://via.placeholder.com/300x200?text=' + encodeURIComponent(item.name);
+                    var card = `
+                        <div class="col-md-3">
+                            <div class="card h-100 medicine-card" onclick="location.href='/Medicine/Details/${item.id}'">
+                                <img src="${imgSrc}" class="card-img-top med-img" onerror="this.src='https://via.placeholder.com/300x200?text=Medicine'">
+                                <div class="card-body d-flex flex-column">
+                                    <h6 class="fw-bold mb-1">${item.name}</h6>
+                                    <p class="small text-muted mb-2">${item.genericName}</p>
+                                    <div class="mt-auto d-flex justify-content-between align-items-center">
+                                        <span class="fw-bold text-primary">Rs. ${item.price}</span>
+                                        <small class="text-muted">Stock: ${item.stock}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                    grid.append(card);
                 });
-            }
-            document.addEventListener('DOMContentLoaded', filterMedicines);
+            });
+        }
+
+        $('#searchInput').on('keyup', function () {
+            loadMedicines($(this).val());
+        });
+
+        $(document).ready(function () {
+            loadMedicines('');
+        });
     </script>
-</body>
-</html>
+}

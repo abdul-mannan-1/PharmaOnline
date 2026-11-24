@@ -1,36 +1,105 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PharmaOnline - Shopping Cart</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-    <div class="container py-4">
-        <div class="d-flex justify-content-between mb-4">
-            <h3 class="fw-bold">Shopping Cart</h3>
-            <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">
-                &larr; Back to Catalog
-            </a>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Shopping Cart";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between mb-4">
+        <h3 class="fw-bold">Shopping Cart</h3>
+        <a asp-controller="Home" asp-action="Index" class="btn btn-outline-primary">
+            &larr; Back to Catalog
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card p-3 border-0 shadow-sm">
+                <table class="table align-middle" id="cartTable">
+                    <thead>
+                        <tr>
+                            <th>Medicine</th>
+                            <th>Price</th>
+                            <th>Expiry Date</th>
+                            <th>Qty</th>
+                            <th>Subtotal</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cartBody">
+                        <tr><td colspan="6" class="text-center text-muted">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
-        <div class="row g-4">
-            <div class="col-lg-8">
-                <div class="card p-3 border-0 shadow-sm">
-                    <table class="table align-middle">
-                        <thead><tr><th>Medicine</th><th>Price</th><th>Expiry Date</th><th>Qty</th><th>Subtotal</th></tr></thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>Panadol Extra 500mg</strong></td>
-                                <td>Rs. 250</td>
-                                <td>2027-12-31</td>
-                                <td>2</td>
-                                <td class="fw-bold">Rs. 500</td>
-                            </tr>
-                        </tbody>
-                    </table>
+
+        <div class="col-lg-4">
+            <div class="card p-3 border-0 shadow-sm">
+                <h5 class="fw-bold mb-3">Order Summary</h5>
+                <div class="d-flex justify-content-between mb-2">
+                    <span>Total</span>
+                    <span class="fw-bold text-primary" id="cartTotal">Rs. 0</span>
                 </div>
+                <a asp-controller="Order" asp-action="Checkout" class="btn btn-primary w-100 mt-2">
+                    Proceed to Checkout
+                </a>
             </div>
         </div>
     </div>
-</body>
+</div>
+
+@section Scripts {
+    <script>
+        function loadCart() {
+            $.get('/Cart/GetItems', function (data) {
+                var tbody = $('#cartBody');
+                tbody.empty();
+                var total = 0;
+
+                if (data.length === 0) {
+                    tbody.html('<tr><td colspan="6" class="text-center text-muted">Your cart is empty.</td></tr>');
+                    $('#cartTotal').text('Rs. 0');
+                    return;
+                }
+
+                $.each(data, function (i, item) {
+                    var subtotal = item.medicinePrice * item.quantity;
+                    total += subtotal;
+                    var expiry = item.medicineExpiryDate ? item.medicineExpiryDate.substring(0, 10) : '-';
+                    var row = `
+                        <tr>
+                            <td><strong>${item.medicineName}</strong></td>
+                            <td>Rs. ${item.medicinePrice}</td>
+                            <td>${expiry}</td>
+                            <td>
+                                <input type="number" min="1" value="${item.quantity}" class="form-control form-control-sm" style="width:70px"
+                                    onchange="updateQty(${item.id}, this.value)" />
+                            </td>
+                            <td class="fw-bold">Rs. ${subtotal}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-danger" onclick="removeItem(${item.id})">Remove</button>
+                            </td>
+                        </tr>`;
+                    tbody.append(row);
+                });
+
+                $('#cartTotal').text('Rs. ' + total);
+            });
+        }
+
+        function updateQty(id, qty) {
+            $.post('/Cart/UpdateQuantity', { id: id, quantity: qty }, function () {
+                loadCart();
+            });
+        }
+
+        function removeItem(id) {
+            $.post('/Cart/Remove', { id: id }, function () {
+                loadCart();
+            });
+        }
+
+        $(document).ready(function () {
+            loadCart();
+        });
+    </script>
+}
